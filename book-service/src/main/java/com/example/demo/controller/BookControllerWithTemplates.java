@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import java.util.List;
 
 @Controller
-@RequestMapping({"/api"})
+@RequestMapping("/api/books")
 public class BookControllerWithTemplates {
   private final BookRepository bookRepository;
 
@@ -20,7 +20,7 @@ public class BookControllerWithTemplates {
     this.bookRepository = bookRepository;
   }
 
-  @GetMapping("/books")
+  @GetMapping("")
   private String getBooksAll(Model model) {
     List<Book> bookList = this.bookRepository.getBooksAll();
     model.addAttribute("books", bookList);
