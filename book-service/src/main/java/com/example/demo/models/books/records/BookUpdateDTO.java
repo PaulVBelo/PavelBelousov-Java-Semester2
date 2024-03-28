@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
 
-public record BookUpdateDTO(@NotNull String title,
-                            @NotNull String author,
-                            @NotNull List<String> tags) {
+public record BookUpdateDTO(String title,
+                            Long authorId,
+                            List<String> tags) {
 }

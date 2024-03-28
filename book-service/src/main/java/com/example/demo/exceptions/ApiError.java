@@ -1,4 +1,4 @@
-package com.example.demo.models.exceptions;
+package com.example.demo.exceptions;
 
 public record ApiError(String message) {
   public ApiError(String message) {
