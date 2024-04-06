@@ -16,10 +16,13 @@ import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.shaded.org.checkerframework.checker.units.qual.A;
 
 import java.util.ArrayList;
@@ -31,10 +34,13 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 
 
 @SpringBootTest(webEnvironment = RANDOM_PORT)
+@Testcontainers
 class AuthorBookTagControllerTest {
   @Autowired
   TestRestTemplate rest;
 
+  @Container
+  @ServiceConnection
   static PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:latest");
 
   @BeforeAll
