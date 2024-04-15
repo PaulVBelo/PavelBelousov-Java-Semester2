@@ -1,6 +1,10 @@
 package com.example.demo.controller;
 
 import com.example.demo.exceptions.ApiError;
+import com.example.demo.exceptions.ValidationException;
+import com.example.demo.gateway.AuthorRegistryGateway;
+import com.example.demo.gateway.records.ValidationRequestDTO;
+import com.example.demo.gateway.records.ValidationResponseDTO;
 import com.example.demo.models.authors.Author;
 import com.example.demo.models.authors.AuthorRepository;
 import com.example.demo.models.authors.records.AuthorOnlyDTO;
@@ -11,6 +15,8 @@ import com.example.demo.models.books.records.BookResponseDTO;
 import com.example.demo.models.books.records.BookUpdateDTO;
 import com.example.demo.models.tags.Tag;
 import com.example.demo.models.tags.TagRepository;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
@@ -29,22 +35,34 @@ public class BookController {
   private final BookRepository bookRepository;
   private final AuthorRepository authorRepository;
   private final TagRepository tagRepository;
+  private final AuthorRegistryGateway gateway;
 
   @Autowired
-  public BookController(BookRepository bookRepository, AuthorRepository authorRepository, TagRepository tagRepository) {
+  public BookController(BookRepository bookRepository,
+                        AuthorRepository authorRepository,
+                        TagRepository tagRepository,
+                        AuthorRegistryGateway gateway) {
     this.bookRepository = bookRepository;
     this.authorRepository = authorRepository;
     this.tagRepository = tagRepository;
+    this.gateway = gateway;
   }
-
-  // Добавление реализовано сразу с тегами, так как мне это показалось логичным.
-  // В бд ссылка на автора помечена как NOT NULL (да и удалять её - нарушение одной из нормальных форм), поэтому смена автора реализована напрямую в PUT
 
   @Transactional
   @PostMapping
   public BookResponseDTO createBook(@RequestBody @Valid BookCreateDTO toCreate) {
     Author author = authorRepository.findById(toCreate.authorId()).orElseThrow();
     author.getBooks().iterator();
+    ValidationResponseDTO validationResponse =
+        gateway.validateBook(new ValidationRequestDTO(
+            author.getFirstName(),
+            author.getLastName(),
+            toCreate.title()),
+            UUID.randomUUID().toString()
+        );
+    if (!validationResponse.validationResult()) {
+      throw new ValidationException("Bad Request: The creation form is Illegal");
+    }
     List<Tag> tagList = new ArrayList<>();
     for (String s: toCreate.tags()) {
       Tag tag;
@@ -61,19 +79,6 @@ public class BookController {
     }
     return new BookResponseDTO(book.getId(), book.getTitle(),
         new AuthorOnlyDTO(author.getId(), author.getFirstName(), author.getLastName()),
-        book.getTags().stream().map(t -> t.getName()).collect(Collectors.toList()));
-  }
-
-  @Transactional
-  @GetMapping("/{id}")
-  public BookResponseDTO getBook(@PathVariable("id") Long id) {
-    //Get в задании не было, я его сделал для себя.
-    Book book = bookRepository.findById(id).orElseThrow();
-    return new BookResponseDTO(book.getId(), book.getTitle(),
-        new AuthorOnlyDTO(
-            book.getAuthor().getId(),
-            book.getAuthor().getFirstName(),
-            book.getAuthor().getLastName()),
         book.getTags().stream().map(t -> t.getName()).collect(Collectors.toList()));
   }
 
@@ -102,11 +107,28 @@ public class BookController {
     bookRepository.save(book);
   }
 
+  @Transactional
+  @GetMapping("/{id}")
+  public BookResponseDTO getBook(@PathVariable("id") Long id) {
+    //Get в задании не было, я его сделал для себя.
+    Book book = bookRepository.findById(id).orElseThrow();
+    return new BookResponseDTO(book.getId(), book.getTitle(),
+        new AuthorOnlyDTO(
+            book.getAuthor().getId(),
+            book.getAuthor().getFirstName(),
+            book.getAuthor().getLastName()),
+        book.getTags().stream().map(t -> t.getName()).collect(Collectors.toList()));
+  }
 
   @Transactional
   @DeleteMapping("/{id}")
   public void deleteBook(@PathVariable("id") Long id) {
     bookRepository.deleteById(id);
+  }
+
+  @ExceptionHandler
+  public ResponseEntity<ApiError> validationExceptionHandler(ValidationException e) {
+    return new ResponseEntity(new ApiError(e.getMessage()), HttpStatus.NOT_FOUND);
   }
 
   @ExceptionHandler
@@ -120,5 +142,15 @@ public class BookController {
         .stream().map(ConstraintViolation::getMessage)
         .collect(Collectors.joining(", "))),
         HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler
+  public ResponseEntity<ApiError> requestNotPermittedResponse(RequestNotPermitted e) {
+    return new ResponseEntity(new ApiError(e.getMessage()), HttpStatus.BAD_GATEWAY);
+  }
+
+  @ExceptionHandler
+  public ResponseEntity<ApiError> callNotPermittedExceptionResponse(CallNotPermittedException e) {
+    return new ResponseEntity(new ApiError(e.getMessage()), HttpStatus.BAD_GATEWAY);
   }
 }

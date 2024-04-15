@@ -1,5 +1,8 @@
 package com.example.demo.controller;
 
+import com.example.demo.gateway.AuthorRegistryGateway;
+import com.example.demo.gateway.records.ValidationRequestDTO;
+import com.example.demo.gateway.records.ValidationResponseDTO;
 import com.example.demo.models.authors.Author;
 import com.example.demo.models.authors.AuthorRepository;
 import com.example.demo.models.authors.records.AuthorResponseDTO;
@@ -12,10 +15,11 @@ import com.example.demo.models.tags.Tag;
 import com.example.demo.models.tags.TagRepository;
 import com.example.demo.models.tags.records.TagResponseDTO;
 import org.junit.jupiter.api.*;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.ResponseEntity;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -26,14 +30,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
-@SpringBootTest(webEnvironment = RANDOM_PORT)
+@SpringBootTest(webEnvironment = RANDOM_PORT, properties = {"author-registry-gateway.mode=stub"})
 @Testcontainers
 class AuthorBookTagControllerTest {
   @Container
   @ServiceConnection
   static PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:latest");
+
+  @MockBean
+  private AuthorRegistryGateway gateway;
+
+  // MOCK BEAN CONFIG
+
 
   @Autowired
   TestRestTemplate rest;
@@ -144,6 +155,10 @@ class AuthorBookTagControllerTest {
 
   @Test
   public void createBookTest() {
+    // Далее считаем, что в gateway дут корректные и валидные запросы
+    Mockito.when(gateway.validateBook(any(ValidationRequestDTO.class), any(String.class)))
+        .thenReturn(new ValidationResponseDTO(true));
+
     String debugFN = "stuart";
     String debugLN = "ave";
     String debugTag1 = "fur";
@@ -192,6 +207,10 @@ class AuthorBookTagControllerTest {
 
   @Test
   public void updateAndDeleteBookTest() {
+    // Нужно для createBook, оэтому везде позволяем данным пройти
+    Mockito.when(gateway.validateBook(any(ValidationRequestDTO.class), any(String.class)))
+        .thenReturn(new ValidationResponseDTO(true));
+
     String debugFN = "stuart";
     String debugLN = "ave";
     String debugTag1 = "fur";
