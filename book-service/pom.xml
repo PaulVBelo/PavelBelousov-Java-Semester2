@@ -108,8 +108,19 @@
 			<artifactId>mockserver-client-java</artifactId>
 			<version>3.10.8</version>
 		</dependency>
+		<dependency>
 
-		</dependencies>
+			<groupId>org.springframework.kafka</groupId>
+			<artifactId>spring-kafka</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>kafka</artifactId>
+			<version>1.19.3</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
 
 	<build>
 		<plugins>

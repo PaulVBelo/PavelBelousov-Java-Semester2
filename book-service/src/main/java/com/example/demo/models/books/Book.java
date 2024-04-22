@@ -31,6 +31,9 @@ public class Book {
   @NotNull(message = "Book title has to be filled")
   private String title;
 
+  @Column(name = "rating")
+  private int rating;
+
   @ManyToMany(fetch = EAGER, cascade = PERSIST)
   @JoinTable(
       name = "tag_book",
@@ -72,6 +75,14 @@ public class Book {
 
   public void setTags(Set<Tag> tags) {
     this.tags = tags;
+  }
+
+  public int getRating() {
+    return rating;
+  }
+
+  public void setRating(int rating) {
+    this.rating = rating;
   }
 }
 
