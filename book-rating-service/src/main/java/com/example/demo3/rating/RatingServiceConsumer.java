@@ -26,13 +26,14 @@ public class RatingServiceConsumer {
 
   @KafkaListener(topics = {"${topic-to-consume-message}"})
   public void rateBook(String message, Acknowledgment acknowledgement) {
+    LOGGER.info("Retrieved message '{}'", message);
     try {
       BookRatingRequestDTO bookToRate = objectMapper.readValue(message, BookRatingRequestDTO.class);
-      LOGGER.info("Retrieved message {}", message);
       processor.process(message);
       acknowledgement.acknowledge();
     } catch (JsonProcessingException e) {
-      // Не должно произойти. В худшем случае просто не отвечаем.
+      LOGGER.warn("Unexpected error", e);
+      throw new IllegalStateException("Something went wrong: retrieving invalid data from broker");
     }
   }
 }
