@@ -2,6 +2,7 @@ package com.example.demo.models.books;
 
 import com.example.demo.models.authors.Author;
 import com.example.demo.models.tags.Tag;
+import com.example.demo.purchase.ProhibitedPurchaseException;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
@@ -34,6 +35,12 @@ public class Book {
   @Column(name = "rating")
   private int rating;
 
+  // Прочитал в интернете. Вроде так тратится больше памяти, но это выглядит удобно, и default = OK имеет смысл.
+  // Я хотел использовать String, но показалось, что от меня требуется Enum. Поэтому Enum.
+  @Column(name = "status")
+  @Enumerated(EnumType.STRING)
+  private Status status;
+
   @ManyToMany(fetch = EAGER, cascade = PERSIST)
   @JoinTable(
       name = "tag_book",
@@ -47,6 +54,7 @@ public class Book {
   public Book(String title, Author author) {
     this.title = title;
     this.author = author;
+    this.status = Status.OK;
   }
 
   public Long getId() {
@@ -83,6 +91,25 @@ public class Book {
 
   public void setRating(int rating) {
     this.rating = rating;
+  }
+
+  public Status getStatus() {
+    return status;
+  }
+
+  public void setStatus(Status status) {
+    this.status = status;
+  }
+
+  public void buyBook() {
+    switch (this.status) {
+      case PAYMENT_PENDING:
+        throw new ProhibitedPurchaseException("Book is in the process of payment");
+      case BOUGHT:
+        throw new ProhibitedPurchaseException("This book has already been bought");
+      default:
+        this.status = Status.PAYMENT_PENDING;
+    }
   }
 }
 

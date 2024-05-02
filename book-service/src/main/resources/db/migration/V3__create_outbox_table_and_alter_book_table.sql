@@ -1,0 +1,14 @@
+CREATE TABLE outbox
+(
+    id BIGSERIAL PRIMARY KEY,
+    data TEXT NOT NULL
+);
+
+ALTER TABLE books
+ADD status TEXT NOT NULL;
+
+CREATE TABLE inbox
+(
+    id BIGINT PRIMARY KEY,
+    data TEXT NOT NULL
+);
