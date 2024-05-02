@@ -68,8 +68,8 @@ class BookRatingConsumerTest {
     String testData = objectMapper.writeValueAsString(new BookRatingResponseDTO(1l, 10));
     kafkaTemplate.send("test-topic", testData);
 
-    // Не проходит, починить не вышло
     /*
+    Всё ещё не работает
     await().atMost(Duration.ofSeconds(5))
         .pollDelay(Duration.ofSeconds(1))
         .untilAsserted(() -> Mockito.verify(

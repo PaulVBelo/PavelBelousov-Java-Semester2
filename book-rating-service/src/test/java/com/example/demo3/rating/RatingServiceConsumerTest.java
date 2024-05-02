@@ -67,7 +67,7 @@ class RatingServiceConsumerTest {
         ));
     kafkaTemplate.send("test-topic", testData);
 
-    // Не проходит, починить не вышло
+    // Так и не починил
     /*
     await().atMost(Duration.ofSeconds(5))
         .pollDelay(Duration.ofSeconds(1))
@@ -75,6 +75,6 @@ class RatingServiceConsumerTest {
                 messageProcessor, times(1))
             .process(any(String.class))
         );
-     */
+        */
   }
 }
