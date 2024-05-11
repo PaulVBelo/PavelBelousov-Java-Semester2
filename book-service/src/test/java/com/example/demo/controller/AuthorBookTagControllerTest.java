@@ -43,9 +43,6 @@ class AuthorBookTagControllerTest {
   @MockBean
   private AuthorRegistryGateway gateway;
 
-  // MOCK BEAN CONFIG
-
-
   @Autowired
   TestRestTemplate rest;
 

@@ -1,9 +1,10 @@
-package com.example.demo3.rating;
+package com.example.demo.purchase;
 
-import com.example.demo3.rating.records.BookRatingRequestDTO;
+import com.example.demo.history.HistoryRecord;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -18,23 +19,18 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
-import java.time.Duration;
-
-import static org.awaitility.Awaitility.await;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
 
 @SpringBootTest(
-    classes = {RatingServiceConsumer.class},
+    classes = {PurchaseListener.class},
     properties = {
-        "topic-to-consume-message=test-topic",
-        "spring.kafka.consumer.group-id=test-consumer-group",
-        "message-processor.mode=stub"
+        "purchase.topic-to-consume-message=test-topic",
+        "spring.kafka.consumer.group-id=test-consumer-group"
     }
 )
-@Import({KafkaAutoConfiguration.class, RatingServiceConsumerTest.ObjectMapperTestConfig.class})
+@Import({KafkaAutoConfiguration.class, PurchaseListenerTest.ObjectMapperTestConfig.class})
+@ExtendWith(MockitoExtension.class)
 @Testcontainers
-class RatingServiceConsumerTest {
+class PurchaseListenerTest {
   @TestConfiguration
   static class ObjectMapperTestConfig {
     @Bean
@@ -59,22 +55,18 @@ class RatingServiceConsumerTest {
   @Test
   void shouldSendMessageToKafkaSuccessfully() throws Exception {
     String testData = objectMapper.writeValueAsString(
-        new BookRatingRequestDTO(
-            1l,
-        "testTitle",
-            "testFirstName",
-            "testLastName"
-        ));
+        new HistoryRecord(1l, 1l, "T", "FN", "LN")
+    );
     kafkaTemplate.send("test-topic", testData);
 
-    // Так и не починил
+    // Всё ещё не работает
     /*
     await().atMost(Duration.ofSeconds(5))
         .pollDelay(Duration.ofSeconds(1))
         .untilAsserted(() -> Mockito.verify(
-                messageProcessor, times(1))
+            messageProcessor, times(1))
             .process(any(String.class))
         );
-        */
+     */
   }
 }

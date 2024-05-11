@@ -4,6 +4,7 @@ import com.example.demo3.rating.records.BookRatingRequestDTO;
 import com.example.demo3.rating.records.BookRatingResponseDTO;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
@@ -11,6 +12,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 @Component
+@ConditionalOnProperty(value = "message-processor.mode", havingValue = "rating")
 public class RatingProcessor implements MessageProcessor{
   private Set<RatedBook> ratedBooks;
   private ObjectMapper objectMapper;
